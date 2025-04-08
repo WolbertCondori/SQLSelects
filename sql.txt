@@ -1,0 +1,532 @@
+2.- SELECT nombre_cliente FROM `clientes` where id_cliente in (SELECT id_cliente FROM clientes where ciudad="Madrid");
+3.- SELECT clientes.ciudad,clientes.nombre,sum(pedidos.total)as cantidad_total from pedidos LEFT JOIN clientes on pedidos.id_cliente=clientes.id_cliente GROUP by clientes.nombre HAVING cantidad_total > 150
+4.- select * FROM productos inner join categorias on productos.id_categoria=categorias.id_categoria inner join pedidos_detalles on productos.id_producto=pedidos_detalles.id_producto
+5.- SELECT SUM(precio*pedidos_detalles.cantidad),categorias.nombre_categoria FROM productos inner join pedidos_detalles on productos.id_producto=pedidos_detalles.id_producto inner join categorias on productos.id_categoria=categorias.id_categoria GROUP by categorias.id_categoria
+6.- SELECT*FROM estudiantes INNER JOIN inscripciones on estudiantes.id_estudiante=inscripciones.id_estudiante inner JOIN cursos on inscripciones.id_curso=cursos.id_curso
+7.- SELECT estudiantes.nombre,inscripciones.fecha_inscripcion,cursos.nombre_curso from estudiantes inner join inscripciones on estudiantes.id_estudiante=inscripciones.id_estudiante INNER JOIN cursos on inscripciones.id_curso=cursos.id_curso where cursos.nombre_curso="Programación"
+8.- SELECT*FROM doctores inner join citas on doctores.id_doctor=citas.id_doctor inner join pacientes on citas.id_paciente=pacientes.id_paciente
+9.- SELECT COUNT(citas.id_doctor)as cantidad_citas,citas.id_doctor,doctores.nombre FROM doctores left join citas on doctores.id_doctor=citas.id_doctor GROUP BY doctores.id_doctor
+10.- SELECT * from pacientes INNER JOIN citas on pacientes.id_paciente=citas.id_paciente inner join doctores on citas.id_doctor=doctores.id_doctor where doctores.especialidad="Cardiología"
+11.- SELECT sum(productos.precio*pedidos.cantidad)as total,clientes.nombre FROM clientes inner JOIN pedidos on clientes.id_cliente=pedidos.id_cliente inner join productos on pedidos.id_producto=productos.id_producto GROUP by clientes.nombre
+12.- SELECT * from clientes left join pedidos on clientes.id_cliente=pedidos.id_cliente
+13.- SELECT
+ vendedor,
+ departamento,
+ fecha,
+ monto,
+ SUM(monto) OVER (PARTITION BY departamento ORDER BY fecha) AS total_acumulado
+FROM ventas;
+14.- SELECT vendedor,departamento,rank()over(PARTITION by departamento ORDER by monto) from ventas
+15.- SELECT vendedor,categoria, rank()over(PARTITION by categoria ORDER by monto DEsc) as ranking from ventas;
+16.- SELECT fecha,categoria,sum(monto)over(PARTITION BY categoria ORDER by fecha)from ventas;
+17.- SELECT fecha,categoria,FIRST_value(monto)over(PARTITION BY categoria ORDER by fecha)as primero , LAST_value(monto)over(PARTITION by categoria )as ultimo from ventas;
+18.- SELECT estudiante,calificacion,rank()over(PARTITION by materia ORDER by calificacion desc)from calificaciones;
+19.- SELECT estudiante,row_number()over(PARTITION by materia order by calificacion desc)as a from calificaciones
+20.- SELECT vendedor,monto,SUM(monto)over(PARTITION by vendedor ORDER BY fecha)as total from ventas_mensuales;
+21.- SELECT monto,lag(monto)over(PARTITION by vendedor ORDER by fecha)as venta_mes_antes,monto-lag(monto)over(PARTITION by vendedor ORDER by fecha)as diferencia FROM ventas_mensuales
+22.- SELECT proyecto,empleado,progreso,lag(progreso,0)over(PARTITION BY proyecto ORDER by fecha_fin desc ) as proseso_anterior,progreso-lag(progreso)over(PARTITION BY proyecto ORDER by fecha_fin desc)as diferencia FROM `proyectos` 
+23.- SELECT plataforma,sum(precio*cantidad)over(PARTITION BY plataforma ORDER BY fecha_venta)from ventas_videojuegos 
+24.- SELECT empleados.nombre,empleados.departamento FROM empleados union SELECT proyectos.nombre_empleado,null as departamento from proyectos,empleados;
+25.- SELECT empleados_ventas.nombre,empleados_ventas.salario FROM empleados_ventas union SELECT empleados_marketing.nombre,empleados_marketing.salario from empleados_marketing;
+26.- CREATE VIEW num4 as
+SELECT productos.nombre_producto,sum(pedidos.cantidad) as cantidadTotal,sum(pedidos.cantidad)*productos.precio_unitario as totalVentas from productos LEFT join  pedidos on productos.id_producto=pedidos.id_producto GROUP by productos.nombre_producto
+27.- SELECT videojuegos.nombre,COUNT(compras.id_game),compras.fecha FROM compras RIGHT OUTER join videojuegos on compras.id_game=videojuegos.id_game GROUP by videojuegos.nombre
+28.- create table Libros(
+id_libro varchar (10)not null PRIMARY KEY,
+titulo varchar (200),
+autor varchar (200),
+genero varchar (100),
+precio numeric (10));
+create table Usuarios(
+    id_usu varchar (10)not null PRIMARY KEY,
+	nombre varchar (100),
+	email varchar (200));
+CREATE table Prestamos(
+id_prestamo varchar (100)not null PRIMARY KEY,
+id_usu varchar (10),
+id_libro varchar (10),
+fecha_prestamo date,
+CONSTRAINT FK_IDE_USU FOREIGN KEY (id_usu)REFERENCES Usuarios(id_usu)on UPDATE CASCADE on DELETE CASCADE,
+CONSTRAINT FK_IDE_BOOK FOREIGN KEY (id_libro)REFERENCES Libros(id_libro)on UPDATE set null on DELETE set null);
+29.- SELECT libros.titulo,COUNT(prestamos.id_libro),prestamos.fecha_prestamo FROM prestamos RIGHT OUTER join libros on prestamos.id_libro=libros.id_libro GROUP by libros.titulo
+30.- SELECT libros.titulo,usuarios.nombre,prestamos.fecha_prestamo FROM prestamos RIGHT OUTER join libros on prestamos.id_libro=libros.id_libro LEFT OUTER join usuarios on prestamos.id_usu=usuarios.id_usu GROUP by prestamos.fecha_prestamo DESC
+31.- UPDATE productos set productos.id_producto="4" where productos.id_producto="1"
+32.- UPDATE habitaciones set habitaciones.id_habitacion=5 where habitaciones.id_habitacion=1
+33.- DELIMITER {{
+CREATE TRIGGER actualizar_stock AFTER INSERT on ventas for EACH ROW 
+BEGIN 
+UPDATE productos set productos.stock = productos.stock-ventas.cantidad where productos.id=ventas.producto_id;
+END{{
+DELIMITER ; 
+34.- DELIMITER {{
+CREATE TRIGGER actualizar_sueldo AFTER UPDATE on empleados for EACH ROW 
+BEGIN 
+INSERT INTO auditoria_sueldos (empleado_id,nombre,sueldo_anterior,sueldo_nuevo,fecha_cambio,accion)VALUES
+(OLD.id,OLD.nombre,OLD.sueldo,NEW.sueldo,NOW(),"actualizacion");
+END {{
+DELIMITER ; 
+35.- DELIMITER {{
+CREATE TRIGGER actualizar_muertos AFTER DELETE on usuarios for EACH ROW 
+BEGIN 
+INSERT INTO usuarios_eliminados(nombre,usuario_id,fecha_registro,fecha_eliminacion,email)VALUES(OLD.nombre,OLD.usuario_id,OLD.fecha_registro,NOW(),OLD.email);
+END {{
+DELIMITER ; 
+36.- DELIMITER {{
+CREATE TRIGGER actualizar_contraseña AFTER UPDATE on usuarios for EACH ROW 
+BEGIN 
+IF OLD.password <> NEW.password THEN INSERT INTO historial_sesiones(usuario_id,fecha_sesion,email)VALUES(NEW.id,NOW(),NEW.email);
+END IF;
+END {{
+DELIMITER ; 
+37.- DELIMITER {{
+CREATE TRIGGER actualizar_promedio AFTER insert on calificaciones for EACH ROW 
+BEGIN 
+UPDATE estudiantes set promedio = (SELECT avg(calificacion)from calificaciones where estudiantes.id=NEW.estudiante_id)WHERE estudiantes.id=NEW.estudiante_id;
+END {{
+DELIMITER ;
+38.- DELIMITER {{
+CREATE TRIGGER actualizar_produc_rm AFTER DELETE on productos for EACH ROW 
+BEGIN 
+UPDATE productos SET activo=0 WHERE productos.id=OLD.id;
+UPDATE productos SET fecha_eliminacion=NOW() WHERE productos.id=OLD:id;
+END {{
+DELIMITER ;
+39.- DELIMITER {{
+CREATE TRIGGER actualizar_produc_rm BEFORE DELETE on productos for EACH ROW 
+BEGIN 
+INSERT INTO productos(id,activo,fecha_eliminacion,nombre,precio)VALUES(OLD.id,0,NOW(),OLD.nombre,OLD.precio);
+END {{
+DELIMITER ;
+40.- SELECT prestamos.id_prestamo,libros.titulo,usuarios.nombre,prestamos.fecha_prestamo,prestamos.fecha_devolucion from prestamos LEFT JOIN libros on prestamos.id_libro=libros.id_libro
+LEFT JOIN usuarios on prestamos.id_usuario=usuarios.id_usuario
+41.- SELECT autores.nombre,libros.titulo from autores LEFT JOIN libros on autores.id_autor=libros.id_autor
+UNION 
+SELECT autores.nombre,libros.titulo from autores RIGHT JOIN libros on autores.id_autor=libros.id_autor
+42.- SELECT titulo
+FROM Libros
+WHERE id_libro NOT IN (SELECT id_libro FROM Prestamos);
+43.- SELECT libros.id_libro,libros.titulo,usuarios.nombre,usuarios.id_usuario from libros LEFT JOIN prestamos on libros.id_libro=prestamos.id_libro
+LEFT JOIN usuarios on prestamos.id_usuario=usuarios.id_usuario
+44.- SELECT COUNT(prestamos.id_usuario) libros_tomados,usuarios.nombre,sum(prestamos.id_usuario) suma_de_prestamos FROM prestamos,usuarios WHERE prestamos.id_usuario=usuarios.id_usuario GROUP BY usuarios.id_usuario
+45.- SELECT COUNT(prestamos.id_usuario) libros_tomados,usuarios.nombre,sum(prestamos.id_usuario) suma_de_prestamos FROM prestamos,usuarios WHERE prestamos.id_usuario=usuarios.id_usuario GROUP BY usuarios.id_usuario HAVING libros_tomados > 1
+46.- CREATE TABLE Empleados(
+id_empleado varchar (10)PRIMARY KEY not null,
+nombre varchar (20));
+CREATE TABLE Proyectos(
+id_proyecto varchar (10)PRIMARY KEY not null,
+nombre varchar (50));
+CREATE TABLE Asignaciones(
+id_asignaciones int AUTO_INCREMENT PRIMARY KEY,
+id_proyecto varchar (10),
+id_empleado varchar (10),
+fecha_asignacion date not null,
+fecha_fin date DEFAULT null,
+CONSTRAINT FK_ID_PROYECT FOREIGN KEY(id_proyecto) REFERENCES Proyectos(id_proyecto) on DELETE CASCADE,
+CONSTRAINT FK_ID_GUY FOREIGN KEY(id_empleado) REFERENCES Empleados(id_empleado) on DELETE CASCADE);
+47.- SELECT asignaciones.id_asignaciones,empleados.nombre,proyectos.nombre,asignaciones.fecha_asignacion FROM empleados,proyectos,asignaciones WHERE empleados.id_empleado=asignaciones.id_empleado and proyectos.id_proyecto=asignaciones.id_proyecto and asignaciones.fecha_fin is null
+48.- SELECT clientes.nombre,productos.nombre_producto,ventas.fecha_venta from ventas left join clientes on ventas.id_cliente=clientes.id_cliente LEFT JOIN productos on productos.id_producto=ventas.id_producto where ventas.fecha_devolucion is null
+49.- DELIMITER }}
+CREATE TRIGGER Devuelto
+AFTER UPDATE on ventas
+for EACH ROW
+BEGIN
+insert INTO historial_ventas(id_venta,id_cliente,id_producto,fecha_venta,fecha_devolucion,fecha_registro)VALUES
+(NEW.id_venta,NEW.id_cliente,NEW.id_producto,OLD.fecha_venta,NEW.fecha_devolucion,NOW());
+END }}
+DELIMITER ;
+50.- SELECT id_producto,sum(cantidad) FROM ventas where id_producto = (SELECT id_producto FROM ventas GROUP by ventas.id_producto ORDER BY sum(ventas.cantidad)DESC LIMIT 1)
+51.- SELECT ventas.id_cliente,id_producto,sum(cantidad) FROM ventas,clientes where ventas.id_cliente=clientes.id_cliente GROUP by id_cliente HAVING id_cliente=1
+52.- SELECT sum(cantidad) cantidadT,productos.nombre_producto,ventas.id_producto,RANK() OVER(ORDER BY cantidadT DESC) FROM ventas,productos WHERE productos.id_producto=ventas.id_producto GROUP by id_producto 
+53.- SELECT autores.nombre,libros.titulo from autores LEFT join libros on autores.id_autor=libros.id_autor 
+union 
+SELECT autores.nombre,libros.titulo from autores RIGHT JOIN libros on autores.id_autor=libros.id_autor
+54.- SELECT libros.id_libro,libros.titulo FROM libros WHERE libros.id_libro in (SELECT prestamos.id_libro FROM prestamos WHERE prestamos.fecha_prestamo is null)
+55.- SELECT usuarios.nombre,prestamos.id_usuario,RANK()Over(ORDER by COUNT(prestamos.id_usuario)) ranking FROM prestamos inner join usuarios on prestamos.id_usuario=usuarios.id_usuario GROUP BY prestamos.id_usuario
+56.- SELECT * FROM libros LEFT JOin prestamos on libros.id_libro=prestamos.id_libro LEFT join usuarios on prestamos.id_usuario=usuarios.id_usuario
+57.- SELECT COUNT(prestamos.id_usuario) veces_prestadas,sum(prestamos.id_prestamo) suma_acumulativa,prestamos.id_usuario,usuarios.nombre from prestamos INNER join usuarios on prestamos.id_usuario=usuarios.id_usuario GROUP BY prestamos.id_usuario
+58.- SELECT * from prestamos GROUP BY prestamos.id_usuario HAVING COUNT(prestamos.id_usuario) > 1
+59.- DELIMITER }}
+CREATE TRIGGER InsertardatosAlHistorial 
+AFTER INSERT on prestamos
+for EACH ROW
+BEGIN
+INSERT into historial_prestamos(id_libro,id_usuario,id_prestamo,fecha_prestamo,fecha_operacion)
+VALUES(NEW.id_libro,NEW.id_usuario,NEW.id_prestamo,NEW.fecha_prestamo,NOW());
+END }}
+DELIMITER ;
+60.- SELECT asignaciones.id_asignacion,empleados.nombre,proyectos.nombre_proyecto from asignaciones INNER join empleados on asignaciones.id_empleado=empleados.id_empleado INNER JOIN proyectos on asignaciones.id_proyecto=proyectos.id_proyecto
+61.- DELIMITER }}
+CREATE TRIGGER InsertardatosAlHistorial 
+AFTER UPDATE on asignaciones
+for EACH ROW
+BEGIN
+INSERT into historial_asignaciones(id_asignacion,id_empleado,id_proyecto,fecha_asignacion,fecha_fin,fecha_registro)
+VALUES(NEW.id_asignacion,NEW.id_empleado,NEW.id_proyecto,NEW.fecha_asignacion,NEW.fecha_fin,NOW());
+END }}
+DELIMITER ;
+62.- INSERT INTO Estudiantes (id_estudiante, nombre, email,edad) VALUES
+(1, 'Ana Rodríguez', 'ana.rodriguez@universidad.com',22),
+(2, 'Carlos Pérez', 'carlos.perez@universidad.com',18),
+(3, 'María Gómez', 'maria.gomez@universidad.com',21),
+(4, 'Javier López', 'javier.lopez@universidad.com',19),
+(5, 'Sofía Martínez', 'sofia.martinez@universidad.com',17);
+-- Insertar matrículas (estudiantes inscritos en cursos)
+INSERT INTO Matriculas (id_matricula, id_estudiante, id_curso, fecha_inscripcion) VALUES
+(1, 1, 1, '2024-01-15'),
+(2, 2, 2, '2024-01-16'),
+(3, 3, 3, '2024-01-17'),
+(4, 4, 4, '2024-01-18'),
+(5, 5, 5, '2024-01-19'),
+(6, 1, 3, '2024-01-20'),
+(7, 2, 5, '2024-01-21'),
+(8, 3, 1, '2024-01-22');
+63.- SELECT COUNT(matriculas.id_matricula) cantidad,matriculas.id_estudiante,estudiantes.nombre from matriculas inner join estudiantes on matriculas.id_estudiante=estudiantes.id_estudiante GROUP BY matriculas.id_estudiante
+64.- SELECT COUNT(matriculas.id_estudiante) cantidad_matriculas,matriculas.id_curso,cursos.nombre,RANK() OVER(ORDER BY COUNT(matriculas.id_estudiante)DESC) ranking from matriculas INNER join cursos on matriculas.id_curso=cursos.id_curso GROUP by matriculas.id_curso ORDER by COUNT(matriculas.id_estudiante) DESC
+65.- DELIMITER }}
+CREATE TRIGGER InsertardatosAlHistorial 
+AFTER UPDATE on misiones
+for EACH ROW
+BEGIN
+INSERT into historial_misiones(id_mision,id_jugador,nombre_mision,fecha_inicio,estado_mision)
+VALUES(OLD.id_mision,OLD.id_jugador,OLD.nombre_mision,OLD.fecha_inicio,NEW.estado_mision);
+END }}
+DELIMITER ;
+66.- SELECT sum(inventario.cantidad) objetos,jugadores.nombre from jugadores left join inventario on jugadores.id_jugador=inventario.id_jugador GROUP BY jugadores.id_jugador
+67.-SELECT * from jugadores left join misiones on jugadores.id_jugador=misiones.id_jugador
+union 
+SELECT * from jugadores RIGHT join misiones on jugadores.id_jugador=misiones.id_jugador
+68.- SELECT COUNT(misiones.id_mision) misiones_completadas,jugadores.nombre from misiones inner join jugadores on misiones.id_jugador=jugadores.id_jugador GROUP BY misiones.id_jugador
+69.- SELECT jugadores.nombre,misiones.id_jugador,RANK() OVER(ORDER by sum(jugadores.experiencia)desc) ranking,sum(jugadores.experiencia) exptotal from misiones inner join jugadores on misiones.id_jugador = jugadores.id_jugador GROUP BY misiones.id_jugador ORDER BY sum(jugadores.experiencia) DESC
+70.- LOAD DATA INFILE '‪C:\Users\ALUMNO\Documents\Ejercicio1indices.csv'
+into TABLE ejercicio1 
+FIELDS TERMINATED BY ';'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+71.- DELIMITER }}
+create PROCEDURE SaludarUsuario(in nombre varchar(60))
+BEGIN 
+	SELECT CONCAT("Hola ,",nombre," !bienvenido devuelta") Mensaje_PRRO;
+END }}
+DELIMITER ;
+CALL SaludarUsuario("Pepe")
+72.- DELIMITER }}
+create PROCEDURE verificar_edad(in edad int)
+BEGIN 
+	if edad >= 18 THEN
+    	SELECT concat("Eres Mayor con ",edad) resultado;
+    ELSEIF edad < 18 THEN
+    	SELECT concat("Eres Menor con ",edad) resultado;
+    END IF;
+END }}
+DELIMITER ;
+ 73.-
+DELIMITER }}
+create PROCEDURE buscar_cliente(in ID_Buscar int,OUT cliente_nombre varchar(100),OUT cliente_saldo decimal(10,2))
+BEGIN 
+	DECLARE cliente_nombre varchar(100);
+    	DECLARE cliente_saldo decimal(10,2);
+	SELECT nombre,saldo into cliente_nombre,cliente_saldo
+    	from clientes where id = ID_Buscar;
+	
+END }}
+DELIMITER ;
+74.- DELIMITER }}
+create PROCEDURE calcular_descuento(in precio decimal(10,2),in  descuento int,OUT resultado decimal(10,2))
+BEGIN 
+	if descuento > 0 THEN
+    	SELECT precio - ((precio/100)*descuento) into resultado;
+    ELSE 
+    	SELECT "Descuento no valido" respuesta;
+    END IF;
+END }}
+DELIMITER ;
+75.- DELIMITER }}
+create PROCEDURE calcularIMC(in peso decimal(10,2),in  altura decimal(10,2))
+BEGIN 
+DECLARE imc decimal(10,2);
+DECLARE respuesta varchar(100);
+set imc = peso/POW(altura,2);
+	if imc < 18.5 THEN
+    	SET respuesta = "bajo peso";
+    ELSEIF imc >= 18.5 && imc <= 24.9 THEN
+    	SET respuesta = "normal";
+    ELSEIF imc >= 25 && imc <= 29.9 THEN
+    	SET respuesta = "sobre peso";
+    ELSEIF imc >= 30 THEN
+    	SET respuesta = "obesidad";
+    END IF;
+    SELECT concat(" usted tiene : ",respuesta," con un IMC de ",imc);
+END }}
+DELIMITER ;	
+76.- 
+DELIMITER }}
+create PROCEDURE actualizar_stock(in id_producto int,in cantidad int)
+BEGIN 
+DECLARE stock_actual int;
+	SELECT stock into stock_actual FROM productos where id = id_producto;
+    if (stock_actual + cantidad) > 0 THEN
+    	UPDATE productos set stock = (stock_actual + cantidad) WHERE id = id_producto;
+    ELSE
+    	SELECT "Error en la cantidad de stocks" error;
+    END IF;
+END }}
+DELIMITER ;
+77.- DELIMITER }}
+create PROCEDURE eliminar(in id_producto int)
+BEGIN 
+    if id_producto in (SELECT id from productos) THEN
+    	delete from productos where id = id_producto;
+    ELSE
+    	SELECT "Error en la id" error;
+    END IF;
+END }}
+DELIMITER ;
+78.-
+DELIMITER $$
+CREATE FUNCTION calcular_salario_total(salario_base DECIMAL(10,2),anios_experiencia INT,tasa_impuesto DECIMAL(5,2))
+RETURNS decimal(10,2)
+NOT DETERMINISTIC
+BEGIN
+ DECLARE x decimal(10,2);
+ set x = salario_base+(salario_base*(0.02*anios_experiencia));
+ SET x = x - ((x / 100)* tasa_impuesto));
+ RETURN x;
+END $$
+DELIMITER ;
+79.- SELECT COUNT(*) from Information_schema.routines where routine_type = "Function" and routine_schema = "academia_aprendisaje";
+80.- 
+DELIMITER $$
+CREATE FUNCTION precio_con_iva(precio_base DECIMAL(10,2),iva INT)
+RETURNS decimal(10,2)
+NOT DETERMINISTIC
+BEGIN
+ DECLARE x decimal(10,2);
+  if precio_base > 0 && iva > 0 && precio_base*((precio_base/100)*iva)>0 THEN
+  	set x = precio_base + ((precio_base/100)*iva);
+  ELSE
+  	set x = precio_base;
+   END IF;
+ RETURN x;
+END $$
+DELIMITER ;
+81.-
+DELIMITER $$
+CREATE FUNCTION sacar_nombre(ID int)
+RETURNS varchar(100)
+DETERMINISTIC
+BEGIN
+ RETURN (SELECT nombre from clientes where id_cliente = ID);
+END $$
+DELIMITER ;
+82.- 
+DELIMITER $$
+CREATE FUNCTION sacar_variable()
+RETURNS int
+DETERMINISTIC
+BEGIN
+ set @a = (SELECT COUNT(*) from clientes);
+ RETURN @a;
+END $$
+DELIMITER ;
+83.-
+======================================
+SELECT concat("%",(100/sacar_variable())* COUNT(*)) porcentaje FROM clientes WHERE  ciudad="Madrid"
+======================================
+SELECT IF(sacar_variable()>3,"hay mas de 3","hay menos de 3") mensaje
+======================================
+SELECT IF((SELECT COUNT(*)FROM clientes)=sacar_variable(),"no cambios","si cambios")
+
+84.-
+DELIMITER $$
+CREATE FUNCTION sacar_valor_total(type varchar(100))
+RETURNS decimal(10,2)
+DETERMINISTIC
+BEGIN
+ RETURN (SELECT sum(precio*cantidad) from productos where id_categoria = type GROUP by id_categoria);
+END $$
+DELIMITER ;
+
+85.-
+DELIMITER //
+CREATE PROCEDURE descuento(IN total DECIMAL(10,2),in nombre varchar(40))
+BEGIN
+DECLARE resultado varchar(20);
+ CASE
+ 	WHEN total >= 500.00 THEN SET resultado = total*0.10;
+     WHEN total BETWEEN 200.00 AND 499.99 THEN SET resultado = total*0.05;
+ 	ELSE SET resultado = total*0;
+ END CASE;
+	INSERT INTO compras(cliente,monto,descuento,total) VALUES (nombre,total,resultado,(total-resultado));
+END //
+DELIMITER ;
+
+86.-
+
+DELIMITER //
+CREATE PROCEDURE no_tienes_nivel(IN total DECIMAL(10,2),in nombre varchar(40))
+BEGIN
+DECLARE resultado varchar(25);
+ CASE
+ 	WHEN total >= 1000.00 THEN SET resultado = "VIP";
+     WHEN total BETWEEN 500.00 AND 999.99 THEN SET resultado = "Frecuente";
+ 	ELSE SET resultado = "Ocasioanl";
+ END CASE;
+	UPDATE clientes set nivel = resultado WHERE clientes.nombre = nombre ;
+END //
+DELIMITER ;
+
+87.-
+
+DELIMITER //
+CREATE PROCEDURE bono(IN identificador int(10))
+BEGIN
+DECLARE resultado decimal(10,2);
+DECLARE salariov decimal(10,2);
+SET salariov = (SELECT salario FROM empleados where id = identificador);
+ CASE
+ 	WHEN salariov >= 3000.00 THEN SET resultado = salariov*0.10;
+     WHEN salariov BETWEEN 1000.00 AND 2999.99 THEN SET resultado = salariov*0.05;
+ 	ELSE SET resultado = salariov*0.00;
+ END CASE;
+	UPDATE empleados set bono = resultado WHERE id = identificador;
+END //
+DELIMITER ;
+
+88.- 
+
+DELIMITER //
+CREATE PROCEDURE venta(in nombre_compra varchar(40),in cantidad int(10))
+BEGIN
+DECLARE resultado int(25);
+DECLARE stock int(10);
+set stock =(SELECT productos.stock from productos where productos.nombre = nombre_compra);
+ CASE
+ 	WHEN stock-cantidad >= 0 THEN 
+	SET resultado = stock-cantidad;
+	select "Compra Realizada" exito;
+ 	ELSE
+    	set resultado = stock;
+    	SELECT "Error cantidad insuficiente" error444;
+ END CASE;
+	UPDATE productos set stock = resultado WHERE productos.nombre = nombre_compra;
+END //
+DELIMITER ;
+
+89.-
+
+DELIMITER //
+CREATE PROCEDURE desempeno(in id int(10))
+BEGIN
+DECLARE resultado varchar(25);
+DECLARE nota decimal(10,1);
+set nota =(SELECT estudiantes.calificacion from estudiantes where estudiantes.id = id);
+ CASE
+ 	WHEN nota BETWEEN 9.0 AND 10.0 THEN set resultado = "Sobresaliente";
+    WHEN nota BETWEEN 7.5 AND 9.0 THEN set resultado = "Notable";
+    WHEN nota BETWEEN 6.0 AND 7.5 THEN set resultado = "Bien"; 
+    WHEN nota BETWEEN 5.0 AND 6.0 THEN set resultado = "Aprobado";
+ 	ELSE set resultado = "Suspenso";
+ END CASE;
+	UPDATE estudiantes set nivel_desempeno = resultado WHERE estudiantes.id = id;
+END //
+DELIMITER ;
+
+90.-
+
+DELIMITER //
+CREATE PROCEDURE multiplicar(in numero int(10))
+BEGIN
+DECLARE resultado int(25);
+DECLARE x int(10);
+SET x = 1;
+bucle:LOOP
+INSERT INTO tablasmultiplicar(numero_base,multiplicador,resultado) VALUES(numero,x,(numero*x));
+IF x = 10 THEN
+	LEAVE bucle;
+END IF;
+set x = x + 1;
+END LOOP;
+END //
+DELIMITER ;
+
+91.- 
+
+DELIMITER //
+CREATE PROCEDURE suma_N(in numero int(10))
+BEGIN
+DECLARE resultado int(10);
+DECLARE x int(10) ;
+SET resultado = 0 ;
+SET x = 1 ;
+WHILE (x <= numero) DO
+ set resultado = resultado + x ;
+ set x = x + 1;
+END WHILE;
+ SELECT resultado suma_total ;
+END //
+DELIMITER ;
+
+92.-
+
+DELIMITER //
+CREATE PROCEDURE sumarpares(in numero int(10))
+BEGIN
+ DECLARE contador INT(10);
+ DECLARE cantidad int(10);
+ SET contador = 1;
+ SET cantidad = 0;
+ REPEAT
+ IF contador % 2 = 0 THEN
+ SET cantidad = cantidad + 1;
+ END IF;
+ SET contador = contador + 1;
+ UNTIL contador > numero END REPEAT;
+ SELECT cantidad numeros;
+END //
+DELIMITER ;
+
+93.-
+
+DELIMITER //
+CREATE PROCEDURE multiplicadores(in numero int(10))
+BEGIN
+DECLARE resultado int(10);
+DECLARE x int(10) ;
+SET resultado = 1 ;
+SET x = numero ;
+WHILE (x >= 1) DO
+ set resultado = resultado * x  ;
+ set x = x - 1;
+END WHILE;
+ SELECT resultado multiplicacion ;
+END //
+DELIMITER ;
+
+94.-
+
+
+DELIMITER //
+CREATE PROCEDURE sumarparesconjunto(in numero int(10))
+BEGIN
+DECLARE resultado varchar(25);
+ DECLARE contador INT(10);
+ DECLARE cantidad int(10);
+ DECLARE sumatotal int(10);
+ SET contador = 1;
+ SET cantidad = 0;
+ set sumatotal = 0;
+ REPEAT
+ IF contador % 2 = 0 THEN
+ SET cantidad = cantidad + 1;
+ set sumatotal = sumatotal + contador;
+ END IF;
+ SET contador = contador + 1;
+ UNTIL contador > numero END REPEAT;
+ CASE
+ 	WHEN sumatotal >= 100 THEN set resultado = "Alta";
+    WHEN sumatotal BETWEEN 50 AND 100 THEN set resultado = "Media";
+ 	ELSE set resultado = "Baja";
+ END CASE;
+ SELECT sumatotal numeros,cantidad cantidad_pares,resultado clasificacion;
+END //
+DELIMITER ;
